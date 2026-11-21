@@ -1,13 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export interface AdsterraBannerProps {
   adKey: string;
   width: number;
   height: number;
   scriptSrc: string;
-  title?: string;
-  slotId?: string;
-  className?: string;
+  slotId: string;
 }
 
 export function AdsterraBanner({
@@ -15,10 +13,31 @@ export function AdsterraBanner({
   width,
   height,
   scriptSrc,
-  title = 'Sponsored banner',
-  slotId = '0',
-  className = '',
+  slotId,
 }: AdsterraBannerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const updateScale = () => {
+      const availableWidth = el.clientWidth;
+      if (availableWidth > 0 && availableWidth < width) {
+        setScale(availableWidth / width);
+      } else {
+        setScale(1);
+      }
+    };
+
+    updateScale();
+
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [width]);
+
   const srcDoc = useMemo(() => {
     const safeKey = adKey.replace(/[^a-zA-Z0-9_-]/g, '');
     return `<!doctype html>
@@ -34,9 +53,6 @@ export function AdsterraBanner({
         height: ${height}px;
         overflow: hidden;
         background: transparent;
-        display: flex;
-        align-items: center;
-        justify-content: center;
       }
     </style>
   </head>
@@ -55,18 +71,26 @@ export function AdsterraBanner({
 </html>`;
   }, [adKey, width, height, scriptSrc]);
 
+  const scaledHeight = Math.round(height * scale);
+
   return (
     <div
-      className={`flex flex-col items-center justify-center ${className}`}
-      aria-label={title}
+      ref={containerRef}
+      className="w-full flex justify-center overflow-hidden"
+      style={{ maxWidth: `${width}px`, height: `${scaledHeight}px` }}
     >
       <div
-        className="relative overflow-hidden bg-slate-100/80 border border-slate-200/80 rounded-md flex items-center justify-center"
-        style={{ width: `${width}px`, height: `${height}px`, maxWidth: '100%' }}
+        className="shrink-0"
+        style={{
+          width: `${width}px`,
+          height: `${height}px`,
+          transform: scale < 1 ? `scale(${scale})` : undefined,
+          transformOrigin: 'top center',
+        }}
       >
         <iframe
           key={`${adKey}-${slotId}`}
-          title={title}
+          title={`Ad ${width}x${height} ${slotId}`}
           srcDoc={srcDoc}
           width={width}
           height={height}
