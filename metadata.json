@@ -1,0 +1,6 @@
+{
+  "name": "PulseFeed Daily",
+  "description": "Fast-loading daily picks, tech highlights, and curated guides optimized for instant mobile and desktop viewing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
